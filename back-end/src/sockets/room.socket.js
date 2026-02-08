@@ -7,6 +7,7 @@ import {
 } from "../utils/validators.js";
 
 const roomUsers = new Map();
+const roomTyping = new Map();
 
 function getRoomMap(room) {
   if (!roomUsers.has(room)) roomUsers.set(room, new Map());
@@ -18,6 +19,17 @@ function getOnlineList(room) {
   if (!map) return [];
   // return unique usernames (optional)
   return Array.from(map.values());
+}
+
+function getTypingSet(room) {
+  if (!roomTyping.has(room)) roomTyping.set(room, new Set());
+  return roomTyping.get(room);
+}
+
+function getTypingList(room) {
+  const set = roomTyping.get(room);
+  if (!set) return [];
+  return Array.from(set.values());
 }
 
 export function registerRoomSocket(io) {
@@ -47,9 +59,15 @@ export function registerRoomSocket(io) {
           socket.leave(socket.data.room);
           const prevRoomMap = getRoomMap(socket.data.room);
           prevRoomMap.delete(socket.id);
+          const prevTypingSet = getTypingSet(socket.data.room);
+          if (socket.data.username) prevTypingSet.delete(socket.data.username);
           io.to(socket.data.room).emit("users:update", {
             room: socket.data.room,
             users: getOnlineList(socket.data.room)
+          });
+          io.to(socket.data.room).emit("typing:update", {
+            room: socket.data.room,
+            users: getTypingList(socket.data.room)
           });
         }
         
@@ -106,6 +124,26 @@ export function registerRoomSocket(io) {
       }
     });
 
+    socket.on("typing:start", () => {
+      const room = sanitizeRoom(socket.data.room);
+      const username = sanitizeUsername(socket.data.username);
+      if (!room || !username) return;
+      const set = getTypingSet(room);
+      if (set.has(username)) return;
+      set.add(username);
+      io.to(room).emit("typing:update", { room, users: getTypingList(room) });
+    });
+
+    socket.on("typing:stop", () => {
+      const room = sanitizeRoom(socket.data.room);
+      const username = sanitizeUsername(socket.data.username);
+      if (!room || !username) return;
+      const set = getTypingSet(room);
+      if (!set.has(username)) return;
+      set.delete(username);
+      io.to(room).emit("typing:update", { room, users: getTypingList(room) });
+    });
+
     socket.on("message:send", async (payload, ack) => {
       try {
         const room = sanitizeRoom(socket.data.room);
@@ -150,8 +188,11 @@ export function registerRoomSocket(io) {
 
       const map = getRoomMap(room);
       map.delete(socket.id);
+      const typingSet = getTypingSet(room);
+      if (username) typingSet.delete(username);
 
       io.to(room).emit("users:update", { room, users: getOnlineList(room) });
+      io.to(room).emit("typing:update", { room, users: getTypingList(room) });
 
       if (username) {
         io.to(room).emit("message:system", {

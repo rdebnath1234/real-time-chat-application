@@ -42,6 +42,7 @@ The project focuses on real-time communication using WebSockets, room management
 - Join existing chat rooms
 - Real-time messaging without page refresh
 - Sender name and timestamp shown with each message
+- Typing indicator for active users
 - Messages stored persistently in MongoDB
 - Last 50 messages loaded when joining a room
 - Online users list per room
@@ -51,6 +52,7 @@ The project focuses on real-time communication using WebSockets, room management
   - *Italic*
   - Auto-detected clickable links
 - Responsive and clean user interface
+- Modern, card-based UI with gradient background
 - Proper handling of user connect and disconnect events
 
 ---
@@ -97,7 +99,7 @@ Chat Application/
 
 ### Backend (`back-end/.env`)
 PORT=5001
-MONGO_URI=mongodb+srv://riyakolkatawb:admin@cluster0.impwc3a.mongodb.net/chat-app?retryWrites=true&w=majority
+MONGO_URI=<your-mongodb-connection-string>
 CLIENT_ORIGIN=http://localhost:5173
 
 ### Frontend (`front-end/.env`)
