@@ -57,6 +57,25 @@ The project focuses on real-time communication using WebSockets, room management
 
 ---
 
+## Screenshots
+
+### 1. Join Chat Form
+![Join Chat Form](screenshots/01-join-form.png)
+
+### 2. Create Room Flow
+![Create Room Flow](screenshots/02-room-created.png)
+
+### 3. Chat Room (Messages + System Updates)
+![Chat Room](screenshots/03-chat-room.png)
+
+### 4. Typing Indicator
+![Typing Indicator](screenshots/04-typing-indicator.png)
+
+### 5. Online Users + Message Formatting
+![Online Users and Formatting](screenshots/05-online-users-and-formatting.png)
+
+---
+
 ## Project Structure
 
 Chat Application/
@@ -82,6 +101,13 @@ Chat Application/
 │ ├── index.html
 │ ├── styles.css
 │ └── package.json
+│
+├── screenshots/
+│ ├── 01-join-form.png
+│ ├── 02-room-created.png
+│ ├── 03-chat-room.png
+│ ├── 04-typing-indicator.png
+│ └── 05-online-users-and-formatting.png
 │
 └── README.md
 
