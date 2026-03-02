@@ -125,7 +125,7 @@ Chat Application/
 
 ### Backend (`back-end/.env`)
 PORT=5001
-MONGO_URI=<your-mongodb-connection-string>
+MONGO_URI=mongodb+srv://riyakolkatawb:admin@cluster0.impwc3a.mongodb.net/chat-app?retryWrites=true&w=majority
 CLIENT_ORIGIN=http://localhost:5173
 
 ### Frontend (`front-end/.env`)
