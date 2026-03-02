@@ -12,6 +12,13 @@ The project focuses on real-time communication using WebSockets, room management
 
 ---
 
+## Live Demo
+
+- Frontend: https://frontend-production-7598.up.railway.app
+- Backend API: https://backend-production-7bc7.up.railway.app
+
+---
+
 ## Technologies Used
 
 ### Frontend
