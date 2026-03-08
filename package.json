@@ -1,0 +1,9 @@
+{
+  "name": "chat-application-railway-root",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "bash ./scripts/railway-build.sh",
+    "start": "bash ./scripts/railway-start.sh"
+  }
+}
