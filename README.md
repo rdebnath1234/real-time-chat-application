@@ -59,6 +59,7 @@ The project focuses on real-time communication using WebSockets, room management
   - *Italic*
   - Auto-detected clickable links
 - Responsive and clean user interface
+- Mobile-responsive chat layout with optimized phone breakpoints
 - Modern, card-based UI with gradient background
 - Proper handling of user connect and disconnect events
 
@@ -71,6 +72,7 @@ The project focuses on real-time communication using WebSockets, room management
 - Fixed room switch behavior so previous-room state is not dropped before validating the new join.
 - Added backward compatibility for older messages stored with `sender`.
 - Hardened message API URL construction for same-origin deployments.
+- Improved mobile responsiveness (stacked topbar, touch-friendly composer, scrollable online users row).
 
 ---
 
