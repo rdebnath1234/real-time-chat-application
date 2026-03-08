@@ -6,7 +6,7 @@ export default function ChatRoom({ socketRef, me, onLeave }) {
   const socket = socketRef.current;
 
   const [users, setUsers] = useState([]);
-  const [messages, setMessages] = useState([]); // includes system messages
+  const [messages, setMessages] = useState(() => me.initialMessages || []); // includes system messages
   const [text, setText] = useState("");
   const [status, setStatus] = useState("connected"); // small UI state
   const [typingUsers, setTypingUsers] = useState([]);
@@ -74,6 +74,12 @@ export default function ChatRoom({ socketRef, me, onLeave }) {
       socket.off("disconnect", onDisconnect);
     };
   }, [socket, me.room]);
+
+  useEffect(() => {
+    setMessages(me.initialMessages || []);
+    setUsers([]);
+    setTypingUsers([]);
+  }, [me.room, me.initialMessages]);
 
   useEffect(() => {
     return () => {

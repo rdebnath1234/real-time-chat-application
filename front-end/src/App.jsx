@@ -4,7 +4,6 @@ import ChatRoom from "./components/ChatRoom";
 import { useSocket } from "./hooks/useSocket";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
-const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 export default function App() {
   const { socketRef, isConnected } = useSocket(SOCKET_URL);
@@ -25,17 +24,15 @@ export default function App() {
         return;
       }
 
-      setMe({ username: ack.username, room: ack.room });
+      const initialMessages = (ack.messages || []).map((m) => ({
+        id: String(m._id || m.id),
+        room: ack.room,
+        username: m.username,
+        text: m.text,
+        createdAt: m.createdAt
+      }));
 
-      (ack.messages || []).forEach((m) => {
-        socketRef.current.emit("message:new", {
-          id: String(m._id || m.id),
-          room: ack.room,
-          username: m.username,
-          text: m.text,
-          createdAt: m.createdAt
-        });
-      });
+      setMe({ username: ack.username, room: ack.room, initialMessages });
     });
   }
 

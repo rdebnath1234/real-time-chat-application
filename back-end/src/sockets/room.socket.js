@@ -42,6 +42,8 @@ export function registerRoomSocket(io) {
       try {
         const room = sanitizeRoom(payload?.room);
         const username = sanitizeUsername(payload?.username);
+        const prevRoom = socket.data.room;
+        const prevUsername = socket.data.username;
 
         if (!isNonEmptyString(room) || !isNonEmptyString(username)) {
           return ack?.({ ok: false, error: "room and username are required" });
@@ -55,49 +57,48 @@ export function registerRoomSocket(io) {
           return ack?.({ ok: false, error: "Room does not exist. Create it first." });
         }
 
-        if (socket.data.room) {
-          socket.leave(socket.data.room);
-          const prevRoomMap = getRoomMap(socket.data.room);
-          prevRoomMap.delete(socket.id);
-          const prevTypingSet = getTypingSet(socket.data.room);
-          if (socket.data.username) prevTypingSet.delete(socket.data.username);
-          io.to(socket.data.room).emit("users:update", {
-            room: socket.data.room,
-            users: getOnlineList(socket.data.room)
-          });
-          io.to(socket.data.room).emit("typing:update", {
-            room: socket.data.room,
-            users: getTypingList(socket.data.room)
-          });
-        }
-        
-
-        // Join new room
-        socket.join(room);
-        socket.data.room = room;
-        socket.data.username = username;
-
-        // Track presence
-        const map = getRoomMap(room);
-
-        // ✅ Prevent duplicate username in the same room (case-insensitive)
-        const alreadyTaken = Array.from(map.values()).some(
-          (u) => u.toLowerCase() === username.toLowerCase()
+        const targetRoomMap = getRoomMap(room);
+        const alreadyTaken = Array.from(targetRoomMap.entries()).some(
+          ([sid, u]) =>
+            sid !== socket.id &&
+            u.toLowerCase() === username.toLowerCase()
         );
 
         if (alreadyTaken) {
           return ack?.({ ok: false, error: "Username already taken in this room" });
         }
 
+        if (prevRoom && prevRoom !== room) {
+          socket.leave(prevRoom);
+          const prevRoomMap = getRoomMap(prevRoom);
+          prevRoomMap.delete(socket.id);
+          const prevTypingSet = getTypingSet(prevRoom);
+          if (prevUsername) prevTypingSet.delete(prevUsername);
+          io.to(prevRoom).emit("users:update", {
+            room: prevRoom,
+            users: getOnlineList(prevRoom)
+          });
+          io.to(prevRoom).emit("typing:update", {
+            room: prevRoom,
+            users: getTypingList(prevRoom)
+          });
+        }
 
+        socket.join(room);
+        socket.data.room = room;
+        socket.data.username = username;
 
-        map.set(socket.id, username);
+        targetRoomMap.set(socket.id, username);
 
         // Load last 50 messages from DB
         const latest = await Message.find({ room })
           .sort({ createdAt: -1 })
           .limit(50)
           .lean();
+        const normalized = latest.map((m) => ({
+          ...m,
+          username: m.username || m.sender || "Unknown"
+        }));
 
         // Notify room about new user list + system event
         io.to(room).emit("users:update", { room, users: getOnlineList(room) });
@@ -113,7 +114,7 @@ export function registerRoomSocket(io) {
           ok: true,
           room,
           username,
-          messages: latest.reverse()
+          messages: normalized.reverse()
         });
       } catch (err) {
         console.error("❌ room:join error:", err); // ✅ see real error in terminal

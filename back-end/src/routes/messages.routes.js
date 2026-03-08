@@ -20,8 +20,12 @@ router.get("/", async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean();
+    const normalized = latest.map((m) => ({
+      ...m,
+      username: m.username || m.sender || "Unknown"
+    }));
 
-    res.json({ room, messages: latest.reverse() });
+    res.json({ room, messages: normalized.reverse() });
   } catch (err) {
     res.status(500).json({ error: "Failed to load messages" });
   }

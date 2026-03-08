@@ -64,6 +64,16 @@ The project focuses on real-time communication using WebSockets, room management
 
 ---
 
+## Latest Implementation Fixes (March 2026)
+
+- Fixed message persistence schema to store and read `username` consistently.
+- Fixed join flow so the last 50 messages are rendered immediately after joining.
+- Fixed room switch behavior so previous-room state is not dropped before validating the new join.
+- Added backward compatibility for older messages stored with `sender`.
+- Hardened message API URL construction for same-origin deployments.
+
+---
+
 ## Screenshots
 
 ### 1. Join Chat Form
@@ -186,6 +196,7 @@ http://localhost:5001
 - Message length limits enforced
 - Message content sanitized before formatting to prevent XSS
 - Only limited and safe formatting allowed
+- Message history response normalizes sender fields for safe legacy reads
 
 ---
 
