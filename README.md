@@ -79,19 +79,19 @@ The project focuses on real-time communication using WebSockets, room management
 ## Screenshots
 
 ### 1. Join Chat Form
-![Join Chat Form](screenshots/01-join-form.png)
+![Join Chat Form](screenshots/join-screen.png)
 
 ### 2. Create Room Flow
-![Create Room Flow](screenshots/02-room-created.png)
+![Create Room Flow](screenshots/create-room-screen.png)
 
 ### 3. Chat Room (Messages + System Updates)
-![Chat Room](screenshots/03-chat-room.png)
+![Chat Room](screenshots/chat-room-screen.png)
 
 ### 4. Typing Indicator
-![Typing Indicator](screenshots/04-typing-indicator.png)
+![Typing Indicator](screenshots/typing-indicator-screen.png)
 
 ### 5. Online Users + Message Formatting
-![Online Users and Formatting](screenshots/05-online-users-and-formatting.png)
+![Online Users and Formatting](screenshots/online-users-screen.png)
 
 ---
 
@@ -122,11 +122,11 @@ Chat Application/
 │ └── package.json
 │
 ├── screenshots/
-│ ├── 01-join-form.png
-│ ├── 02-room-created.png
-│ ├── 03-chat-room.png
-│ ├── 04-typing-indicator.png
-│ └── 05-online-users-and-formatting.png
+│ ├── join-screen.png
+│ ├── create-room-screen.png
+│ ├── chat-room-screen.png
+│ ├── typing-indicator-screen.png
+│ └── online-users-screen.png
 │
 └── README.md
 
