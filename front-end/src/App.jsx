@@ -29,7 +29,10 @@ export default function App() {
         room: ack.room,
         username: m.username,
         text: m.text,
-        createdAt: m.createdAt
+        createdAt: m.createdAt,
+        editedAt: m.editedAt || null,
+        isDeleted: Boolean(m.isDeleted),
+        readBy: Array.isArray(m.readBy) ? m.readBy : []
       }));
 
       setMe({

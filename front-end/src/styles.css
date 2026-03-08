@@ -284,6 +284,33 @@ button[disabled] {
   color: #1f2430;
 }
 
+.msg-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ghost-btn {
+  margin-top: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  box-shadow: none;
+  background: rgba(79, 124, 255, 0.12);
+  color: #1f2d67;
+}
+
+.ghost-btn.danger {
+  background: rgba(220, 38, 38, 0.12);
+  color: #7f1d1d;
+}
+
+.lock-note {
+  font-size: 11px;
+  color: #7c849a;
+}
+
 /* ================= YOUR MESSAGE ================= */
 .msg.me {
   margin-left: auto;
@@ -296,6 +323,19 @@ button[disabled] {
 .msg.me .text,
 .msg.me .text a {
   color: #ffffff;
+}
+
+.msg.me .ghost-btn {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.msg.me .ghost-btn.danger {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.msg.me .lock-note {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* ================= SYSTEM MESSAGE ================= */

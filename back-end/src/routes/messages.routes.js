@@ -21,8 +21,14 @@ router.get("/", async (req, res) => {
       .limit(limit)
       .lean();
     const normalized = latest.map((m) => ({
-      ...m,
-      username: m.username || m.sender || "Unknown"
+      id: String(m._id || m.id),
+      room: m.room,
+      username: m.username || m.sender || "Unknown",
+      text: m.isDeleted ? "[message deleted]" : m.text,
+      createdAt: m.createdAt,
+      editedAt: m.editedAt || null,
+      isDeleted: Boolean(m.isDeleted),
+      readBy: Array.isArray(m.readBy) ? m.readBy : []
     }));
 
     res.json({ room, messages: normalized.reverse() });

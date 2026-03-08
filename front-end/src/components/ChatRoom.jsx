@@ -35,6 +35,31 @@ export default function ChatRoom({ socketRef, me, onLeave }) {
     function onNewMessage(msg) {
       if (msg.room !== me.room) return;
       setMessages((prev) => [...prev, msg]);
+      if (msg.username?.toLowerCase() !== me.username.toLowerCase()) {
+        socket.emit("message:read", { id: msg.id });
+      }
+    }
+
+    function onMessageUpdated(msg) {
+      if (msg.room !== me.room) return;
+      setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, ...msg } : m)));
+    }
+
+    function onMessageDeleted(payload) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === payload.id
+            ? { ...m, isDeleted: true, text: "[message deleted]", editedAt: null }
+            : m
+        )
+      );
+    }
+
+    function onReadUpdate(payload) {
+      if (!payload?.id) return;
+      setMessages((prev) =>
+        prev.map((m) => (m.id === payload.id ? { ...m, readBy: payload.readBy || [] } : m))
+      );
     }
 
     function onSystemMessage(sys) {
@@ -60,6 +85,9 @@ export default function ChatRoom({ socketRef, me, onLeave }) {
 
     socket.on("users:update", onUsersUpdate);
     socket.on("message:new", onNewMessage);
+    socket.on("message:updated", onMessageUpdated);
+    socket.on("message:deleted", onMessageDeleted);
+    socket.on("message:read:update", onReadUpdate);
     socket.on("message:system", onSystemMessage);
     socket.on("typing:update", onTypingUpdate);
     socket.on("connect", onConnect);
@@ -68,6 +96,9 @@ export default function ChatRoom({ socketRef, me, onLeave }) {
     return () => {
       socket.off("users:update", onUsersUpdate);
       socket.off("message:new", onNewMessage);
+      socket.off("message:updated", onMessageUpdated);
+      socket.off("message:deleted", onMessageDeleted);
+      socket.off("message:read:update", onReadUpdate);
       socket.off("message:system", onSystemMessage);
       socket.off("typing:update", onTypingUpdate);
       socket.off("connect", onConnect);
@@ -80,6 +111,17 @@ export default function ChatRoom({ socketRef, me, onLeave }) {
     setUsers(me.initialUsers || []);
     setTypingUsers([]);
   }, [me.room, me.initialMessages, me.initialUsers]);
+
+  useEffect(() => {
+    if (!socket) return;
+    for (const m of messages) {
+      if (m.system || !m.id) continue;
+      if ((m.username || "").toLowerCase() === me.username.toLowerCase()) continue;
+      const readers = new Set((m.readBy || []).map((u) => String(u).toLowerCase()));
+      if (readers.has(me.username.toLowerCase())) continue;
+      socket.emit("message:read", { id: m.id });
+    }
+  }, [messages, me.username, socket]);
 
   useEffect(() => {
     return () => {
@@ -145,6 +187,20 @@ export default function ChatRoom({ socketRef, me, onLeave }) {
     onLeave();
   }
 
+  function editMessage(id, nextText) {
+    if (!socket) return;
+    socket.emit("message:edit", { id, text: nextText }, (ack) => {
+      if (!ack?.ok) alert(ack?.error || "Failed to edit message");
+    });
+  }
+
+  function deleteMessage(id) {
+    if (!socket) return;
+    socket.emit("message:delete", { id }, (ack) => {
+      if (!ack?.ok) alert(ack?.error || "Failed to delete message");
+    });
+  }
+
   return (
     <div className="layout">
       <OnlineUsers users={users} />
@@ -160,7 +216,12 @@ export default function ChatRoom({ socketRef, me, onLeave }) {
           <button onClick={handleLeave}>Leave</button>
         </div>
 
-        <MessageList messages={messages} meUsername={me.username} />
+        <MessageList
+          messages={messages}
+          meUsername={me.username}
+          onEditMessage={editMessage}
+          onDeleteMessage={deleteMessage}
+        />
 
         {typingLabel ? <div className="typing">{typingLabel}</div> : null}
 

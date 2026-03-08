@@ -32,6 +32,26 @@ function getTypingList(room) {
   return Array.from(set.values());
 }
 
+function normalizeMessageDoc(m) {
+  const id = String(m._id || m.id);
+  const username = m.username || m.sender || "Unknown";
+  const readBy = Array.isArray(m.readBy) ? m.readBy : [];
+  return {
+    id,
+    room: m.room,
+    username,
+    text: m.isDeleted ? "[message deleted]" : m.text,
+    createdAt: m.createdAt instanceof Date ? m.createdAt.toISOString() : m.createdAt,
+    editedAt: m.editedAt
+      ? m.editedAt instanceof Date
+        ? m.editedAt.toISOString()
+        : m.editedAt
+      : null,
+    isDeleted: Boolean(m.isDeleted),
+    readBy
+  };
+}
+
 export function registerRoomSocket(io) {
   io.on("connection", (socket) => {
     // Store current state on socket
@@ -95,10 +115,7 @@ export function registerRoomSocket(io) {
           .sort({ createdAt: -1 })
           .limit(50)
           .lean();
-        const normalized = latest.map((m) => ({
-          ...m,
-          username: m.username || m.sender || "Unknown"
-        }));
+        const normalized = latest.map((m) => normalizeMessageDoc(m));
 
         // Notify room about new user list + system event
         io.to(room).emit("users:update", { room, users: getOnlineList(room) });
@@ -163,15 +180,13 @@ export function registerRoomSocket(io) {
         }
 
         // Save to DB
-        const doc = await Message.create({ room, username, text });
-
-        const msg = {
-          id: String(doc._id),
+        const doc = await Message.create({
           room,
           username,
           text,
-          createdAt: doc.createdAt.toISOString()
-        };
+          readBy: [username.toLowerCase()]
+        });
+        const msg = normalizeMessageDoc(doc);
 
         // Broadcast to the room
         io.to(room).emit("message:new", msg);
@@ -179,6 +194,102 @@ export function registerRoomSocket(io) {
         return ack?.({ ok: true });
       } catch (err) {
         return ack?.({ ok: false, error: "Failed to send message" });
+      }
+    });
+
+    socket.on("message:read", async (payload) => {
+      try {
+        const room = sanitizeRoom(socket.data.room);
+        const username = sanitizeUsername(socket.data.username);
+        const messageId = String(payload?.id || "").trim();
+        if (!room || !username || !messageId) return;
+
+        const doc = await Message.findOne({ _id: messageId, room });
+        if (!doc) return;
+
+        const marker = username.toLowerCase();
+        const readBy = new Set((doc.readBy || []).map((u) => String(u).toLowerCase()));
+        if (readBy.has(marker)) return;
+        readBy.add(marker);
+        doc.readBy = Array.from(readBy);
+        await doc.save();
+
+        io.to(room).emit("message:read:update", {
+          id: String(doc._id),
+          readBy: doc.readBy
+        });
+      } catch {
+        // no-op
+      }
+    });
+
+    socket.on("message:edit", async (payload, ack) => {
+      try {
+        const room = sanitizeRoom(socket.data.room);
+        const username = sanitizeUsername(socket.data.username);
+        const messageId = String(payload?.id || "").trim();
+        const text = String(payload?.text || "").trim();
+
+        if (!room || !username) return ack?.({ ok: false, error: "Join a room first" });
+        if (!messageId) return ack?.({ ok: false, error: "Message id is required" });
+        if (!isNonEmptyString(text)) return ack?.({ ok: false, error: "Message cannot be empty" });
+        if (text.length > 1000) return ack?.({ ok: false, error: "Message too long (max 1000)" });
+
+        const doc = await Message.findOne({ _id: messageId, room });
+        if (!doc) return ack?.({ ok: false, error: "Message not found" });
+        if ((doc.username || "").toLowerCase() !== username.toLowerCase()) {
+          return ack?.({ ok: false, error: "You can edit only your own messages" });
+        }
+        if (doc.isDeleted) return ack?.({ ok: false, error: "Deleted message cannot be edited" });
+
+        const readers = new Set((doc.readBy || []).map((u) => String(u).toLowerCase()));
+        readers.delete(username.toLowerCase());
+        if (readers.size > 0) {
+          return ack?.({ ok: false, error: "Cannot edit after message is read" });
+        }
+
+        doc.text = text;
+        doc.editedAt = new Date();
+        await doc.save();
+
+        io.to(room).emit("message:updated", normalizeMessageDoc(doc));
+        return ack?.({ ok: true });
+      } catch {
+        return ack?.({ ok: false, error: "Failed to edit message" });
+      }
+    });
+
+    socket.on("message:delete", async (payload, ack) => {
+      try {
+        const room = sanitizeRoom(socket.data.room);
+        const username = sanitizeUsername(socket.data.username);
+        const messageId = String(payload?.id || "").trim();
+
+        if (!room || !username) return ack?.({ ok: false, error: "Join a room first" });
+        if (!messageId) return ack?.({ ok: false, error: "Message id is required" });
+
+        const doc = await Message.findOne({ _id: messageId, room });
+        if (!doc) return ack?.({ ok: false, error: "Message not found" });
+        if ((doc.username || "").toLowerCase() !== username.toLowerCase()) {
+          return ack?.({ ok: false, error: "You can delete only your own messages" });
+        }
+        if (doc.isDeleted) return ack?.({ ok: true });
+
+        const readers = new Set((doc.readBy || []).map((u) => String(u).toLowerCase()));
+        readers.delete(username.toLowerCase());
+        if (readers.size > 0) {
+          return ack?.({ ok: false, error: "Cannot delete after message is read" });
+        }
+
+        doc.isDeleted = true;
+        doc.text = "[message deleted]";
+        doc.editedAt = null;
+        await doc.save();
+
+        io.to(room).emit("message:deleted", { id: String(doc._id), isDeleted: true, text: "[message deleted]" });
+        return ack?.({ ok: true });
+      } catch {
+        return ack?.({ ok: false, error: "Failed to delete message" });
       }
     });
 
