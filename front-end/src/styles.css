@@ -172,6 +172,8 @@ button[disabled] {
   padding: 18px;
   box-shadow: var(--soft-shadow);
   border: 1px solid #e3e6f5;
+  max-height: 76vh;
+  overflow-y: auto;
 }
 
 .sidebar h3 {
@@ -347,6 +349,32 @@ button[disabled] {
   margin-top: 0;
   border-radius: 999px;
   padding: 10px 18px;
+}
+
+@media (min-width: 1200px) {
+  .page {
+    max-width: 1320px;
+    padding: 36px 28px 56px;
+  }
+
+  .layout {
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .main {
+    height: 78vh;
+    max-height: 860px;
+    padding: 18px;
+  }
+
+  .messages {
+    padding: 16px;
+  }
+
+  .msg {
+    max-width: 68%;
+  }
 }
 
 /* ================= RESPONSIVE ================= */

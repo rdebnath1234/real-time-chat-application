@@ -114,6 +114,7 @@ export function registerRoomSocket(io) {
           ok: true,
           room,
           username,
+          users: getOnlineList(room),
           messages: normalized.reverse()
         });
       } catch (err) {

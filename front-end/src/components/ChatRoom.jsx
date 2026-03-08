@@ -5,7 +5,7 @@ import OnlineUsers from "./OnlineUsers";
 export default function ChatRoom({ socketRef, me, onLeave }) {
   const socket = socketRef.current;
 
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState(() => me.initialUsers || []);
   const [messages, setMessages] = useState(() => me.initialMessages || []); // includes system messages
   const [text, setText] = useState("");
   const [status, setStatus] = useState("connected"); // small UI state
@@ -77,9 +77,9 @@ export default function ChatRoom({ socketRef, me, onLeave }) {
 
   useEffect(() => {
     setMessages(me.initialMessages || []);
-    setUsers([]);
+    setUsers(me.initialUsers || []);
     setTypingUsers([]);
-  }, [me.room, me.initialMessages]);
+  }, [me.room, me.initialMessages, me.initialUsers]);
 
   useEffect(() => {
     return () => {

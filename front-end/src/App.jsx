@@ -32,7 +32,12 @@ export default function App() {
         createdAt: m.createdAt
       }));
 
-      setMe({ username: ack.username, room: ack.room, initialMessages });
+      setMe({
+        username: ack.username,
+        room: ack.room,
+        initialMessages,
+        initialUsers: ack.users || []
+      });
     });
   }
 
